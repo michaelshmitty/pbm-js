@@ -1,0 +1,18 @@
+{
+  "type": "module",
+  "name": "pbm-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
+  },
+  "keywords": [],
+  "author": "Michael Smith",
+  "license": "MIT",
+  "devDependencies": {
+    "@vitest/coverage-c8": "^0.31.0",
+    "vitest": "^0.31.0"
+  }
+}
