@@ -49,6 +49,10 @@ npm install
 npm run test
 ```
 
+## Known issues
+
+- Not yet compatible with all PBM files I have lying around
+
 ## Missing features
 
 - Color Cycling
