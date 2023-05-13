@@ -37,22 +37,13 @@ test("Successfully parse a PBM file", () => {
   }).not.toThrowError();
 });
 
-test("Fail to parse", () => {
-  const fs = require("fs");
-  const data = fs.readFileSync("./tests/fixtures/ASH.LBM");
-
-  expect(() => {
-    new PBM(data.buffer);
-  }).toThrowError(/^Failed to parse file.$/);
-});
-
 test("Fail to parse a PBM file with an invalid chunk id", () => {
   const fs = require("fs");
   const data = fs.readFileSync("./tests/fixtures/INVALID_CHUNK_ID.LBM");
 
   expect(() => {
     new PBM(data.buffer);
-  }).toThrowError(/^Invalid chunkID: "FARM" at byte 12. Expected "FORM".$/);
+  }).toThrowError(/^Invalid chunkId: "FARM" at byte 12. Expected "FORM".$/);
 });
 
 test("Fail to parse a PBM file with an invalid chunk length", () => {
@@ -70,7 +61,7 @@ test("Fail to parse an IFF file that is not a PBM file", () => {
 
   expect(() => {
     new PBM(data.buffer);
-  }).toThrowError(/^Invalid formatID: "ILBM". Expected "PBM ".$/);
+  }).toThrowError(/^Invalid formatId: "ILBM". Expected "PBM ".$/);
 });
 
 test("Parse a PBM bitmap header", () => {

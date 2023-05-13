@@ -76,35 +76,35 @@ class PBM {
 
   parseFORM() {
     // Parse "FORM" chunk
-    let chunkID = this.binaryStream.readString(4);
-    const lenChunk = this.binaryStream.readUint32BE();
-    const formatID = this.binaryStream.readString(4);
+    let chunkId = this.binaryStream.readString(4);
+    let chunkLength = this.binaryStream.readUint32BE();
+    const formatId = this.binaryStream.readString(4);
 
     // Validate chunk according to notes on https://en.wikipedia.org/wiki/ILBM
-    if (chunkID !== "FORM") {
+    if (chunkId !== "FORM") {
       throw new Error(
-        `Invalid chunkID: "${chunkID}" at byte ${this.binaryStream.index}. Expected "FORM".`
+        `Invalid chunkId: "${chunkId}" at byte ${this.binaryStream.index}. Expected "FORM".`
       );
     }
 
-    if (lenChunk !== this.binaryStream.length - 8) {
+    if (chunkLength !== this.binaryStream.length - 8) {
       throw new Error(
-        `Invalid chunk length: ${lenChunk} bytes. Expected ${
+        `Invalid chunk length: ${chunkLength} bytes. Expected ${
           this.binaryStream.length - 8
         } bytes.`
       );
     }
 
-    if (formatID !== "PBM ") {
-      throw new Error(`Invalid formatID: "${formatID}". Expected "PBM ".`);
+    if (formatId !== "PBM ") {
+      throw new Error(`Invalid formatId: "${formatId}". Expected "PBM ".`);
     }
 
     // Parse all other chunks
     while (!this.binaryStream.EOF()) {
-      chunkID = this.binaryStream.readString(4);
-      this.binaryStream.jump(4); // Skip 4 bytes chunk length value
+      chunkId = this.binaryStream.readString(4);
+      chunkLength = this.binaryStream.readUint32BE();
 
-      switch (chunkID) {
+      switch (chunkId) {
         case "BMHD":
           this.parseBMHD();
           break;
@@ -119,16 +119,19 @@ class PBM {
           this.parseCRNG();
           break;
         case "TINY":
-          this.parseTINY();
+          this.parseTINY(chunkLength);
           break;
         case "BODY":
-          this.parseBODY();
+          this.parseBODY(chunkLength);
           break;
         default:
           throw new Error(
-            `Unsupported chunkID: ${chunkID} at byte ${this.binaryStream.index}`
+            `Unsupported chunkId: ${chunkId} at byte ${this.binaryStream.index}`
           );
       }
+
+      // Skip chunk padding byte when chunkLength is not a multiple of 2
+      if (chunkLength % 2 === 1) this.binaryStream.jump(1);
     }
   }
 
@@ -154,7 +157,7 @@ class PBM {
   parseCMAP() {
     const numColors = 2 ** this.numPlanes;
 
-    // FIXME(m): Read 3 bytes at a time?
+    // TODO(m): Read 3 bytes at a time?
     for (let i = 0; i < numColors; i++) {
       let rgb = [];
       for (let j = 0; j < 3; j++) {
@@ -178,62 +181,67 @@ class PBM {
   }
 
   // Parse Thumbnail chunk
-  parseTINY() {
+  parseTINY(chunkLength) {
+    const endOfChunkIndex = this.binaryStream.index + chunkLength;
+
     this.thumbnail.width = this.binaryStream.readUint16BE();
     this.thumbnail.height = this.binaryStream.readUint16BE();
     this.thumbnail.size = this.thumbnail.width * this.thumbnail.height;
 
-    while (this.thumbnail.pixelData.length < this.thumbnail.size) {
-      const byte = this.binaryStream.readByte();
-
-      // TODO(m): Deduplicate decompression code for thumbnail and image data
-      if (this.compression === 1) {
-        // Decompress the data
-        if (byte > 128) {
-          const nextByte = this.binaryStream.readByte();
-          for (let i = 0; i < 257 - byte; i++) {
-            this.thumbnail.pixelData.push(nextByte);
-          }
-        } else if (byte < 128) {
-          for (let i = 0; i < byte + 1; i++) {
-            this.thumbnail.pixelData.push(this.binaryStream.readByte());
-          }
-        } else {
-          break;
-        }
-      } else {
-        // Data is not compressed, just copy the bytes
-        this.thumbnail.pixelData.push(byte);
-      }
+    // Decompress pixel data if necessary
+    if (this.compression === 1) {
+      this.thumbnail.pixelData = this.decompress(endOfChunkIndex);
+    } else {
+      this.thumbnail.pixelData = this.readUncompressed(endOfChunkIndex);
     }
   }
 
   // Parse Image data chunk
-  parseBODY() {
-    // NOTE(m): Should we make use of the chunk length here instead?
+  parseBODY(chunkLength) {
+    const endOfChunkIndex = this.binaryStream.index + chunkLength;
 
-    while (this.pixelData.length < this.size) {
+    // Decompress pixel data if necessary
+    if (this.compression === 1) {
+      this.pixelData = this.decompress(endOfChunkIndex);
+    } else {
+      this.pixelData = this.readUncompressed(endOfChunkIndex);
+    }
+  }
+
+  decompress(endOfChunkIndex) {
+    let result = [];
+
+    while (this.binaryStream.index < endOfChunkIndex) {
       const byte = this.binaryStream.readByte();
 
-      if (this.compression === 1) {
-        // Decompress the data
-        if (byte > 128) {
-          const nextByte = this.binaryStream.readByte();
-          for (let i = 0; i < 257 - byte; i++) {
-            this.pixelData.push(nextByte);
-          }
-        } else if (byte < 128) {
-          for (let i = 0; i < byte + 1; i++) {
-            this.pixelData.push(this.binaryStream.readByte());
-          }
-        } else {
-          break;
+      if (byte > 128) {
+        const nextByte = this.binaryStream.readByte();
+        for (let i = 0; i < 257 - byte; i++) {
+          result.push(nextByte);
+        }
+      } else if (byte < 128) {
+        for (let i = 0; i < byte + 1; i++) {
+          result.push(this.binaryStream.readByte());
         }
       } else {
-        // Data is not compressed, just copy the bytes
-        this.pixelData.push(byte);
+        break;
       }
     }
+
+    return result;
+  }
+
+  // TODO(m): Read a range of bytes straight into an array?
+  // Use arrayBuffers throughout instead?
+  readUncompressed(endOfChunkIndex) {
+    let result = [];
+
+    while (this.binaryStream.index < endOfChunkIndex) {
+      const byte = this.binaryStream.readByte();
+      result.push(byte);
+    }
+
+    return result;
   }
 }
 
