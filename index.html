@@ -9,9 +9,33 @@
   <title>IFF PBM image viewer</title>
 </head>
 <body>
-  <input type="file" id="imagefile" />
-
-  <canvas id="thumbnail-canvas"></canvas>
-  <canvas id="image-canvas"></canvas>
+  <p>
+    <input type="file" id="imagefile" />
+  </p>
+  <p>
+    <button id="cycleColors">Cycle colors</button>
+    <input type="range" min="10" max="50" value="15" id="cyclingSpeedSlider">
+    <span id="cyclingSpeedLabel"></span>
+  </p>
+  <div class="container">
+    <div class="item">
+      <canvas id="image-canvas"></canvas>
+    </div>
+    <div class="item">
+      <div class="sidebar">
+        <div class="item">
+          <canvas id="thumbnail-canvas"></canvas>
+        </div>
+        <div class="item">
+          <canvas id="palette-canvas"></canvas>
+          <div class="buttons">
+            <button id="paletteLeft"><-</button>
+            <span id="palettePageLabel">1</span>
+            <button id="paletteRight">-></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

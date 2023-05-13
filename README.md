@@ -14,7 +14,7 @@ This is the format used by the PC version of Deluxe Paint II and is different fr
 
 ### In the browser
 
-_Also see `index.html` and `main.js` for a more elaborate example that renders the palletized image data to a html5 canvas._
+_Also see `index.html` and `main.js` for a more elaborate example that renders the image and palette data to an html5 canvas and supports color cycling._
 
 ```javascript
 import PBM from "./src/pbm.js";

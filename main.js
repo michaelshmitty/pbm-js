@@ -30,17 +30,51 @@ const thumbnailCanvas = document.getElementById("thumbnail-canvas");
 const thumbnailContext = thumbnailCanvas.getContext("2d");
 const imageCanvas = document.getElementById("image-canvas");
 const imageContext = imageCanvas.getContext("2d");
+const paletteCanvas = document.getElementById("palette-canvas");
+const paletteContext = paletteCanvas.getContext("2d");
+
 const inputElement = document.getElementById("imagefile");
 inputElement.addEventListener("change", handleFile, false);
+
+document.getElementById("paletteLeft").addEventListener("click", paletteLeft);
+document.getElementById("paletteRight").addEventListener("click", paletteRight);
+
+document.getElementById("cycleColors").addEventListener("click", () => {
+  if (running) {
+    running = false;
+  } else {
+    running = true;
+    animate();
+  }
+});
+
+const palettePageLabelEl = document.getElementById("palettePageLabel");
+const cyclingSpeedLabel = document.getElementById("cyclingSpeedLabel");
+cyclingSpeedLabel.innerText = cyclingSpeedSlider.value;
+
+let currentPalettePage = 0;
+let image = null;
+let running = false;
+
+let cycleSpeed = 15.0;
+
+document
+  .getElementById("cyclingSpeedSlider")
+  .addEventListener("input", (evt) => {
+    cycleSpeed = evt.target.value;
+    cyclingSpeedLabel.innerText = cycleSpeed;
+  });
 
 fetch("/assets/TEST.LBM")
   .then((response) => {
     return response.arrayBuffer();
   })
   .then((buffer) => {
-    const image = loadImage(buffer);
+    image = loadImage(buffer);
+    drawPalette(image.palette, currentPalettePage, paletteContext);
     drawImage(image.thumbnail, thumbnailContext);
     drawImage(image, imageContext);
+    console.log(image.cyclingRanges);
   });
 
 function handleFile() {
@@ -48,7 +82,8 @@ function handleFile() {
   const reader = new FileReader();
 
   reader.onload = (evt) => {
-    const image = loadImage(evt.target.result);
+    image = loadImage(evt.target.result);
+    drawPalette(image.palette, currentPalettePage, paletteContext);
     drawImage(image.thumbnail, thumbnailContext);
     drawImage(image, imageContext);
   };
@@ -57,7 +92,7 @@ function handleFile() {
 }
 
 function loadImage(buffer) {
-  const image = new PBM(buffer);
+  image = new PBM(buffer);
   thumbnailCanvas.width = image.thumbnail.width;
   thumbnailCanvas.height = image.thumbnail.height;
   imageCanvas.width = image.width;
@@ -66,9 +101,51 @@ function loadImage(buffer) {
   return image;
 }
 
-function drawImage(image, context) {
-  context.clearRect(0, 0, image.width, image.height);
-  let pixels = context.createImageData(image.width, image.height);
+function paletteLeft(evt) {
+  if (currentPalettePage === 0) {
+    currentPalettePage = 3;
+  } else {
+    currentPalettePage--;
+  }
+  palettePageLabelEl.innerText = currentPalettePage + 1;
+  drawPalette();
+}
+
+function paletteRight(evt) {
+  if (currentPalettePage === 3) {
+    currentPalettePage = 0;
+  } else {
+    currentPalettePage++;
+  }
+  palettePageLabelEl.innerText = currentPalettePage + 1;
+  drawPalette();
+}
+
+function drawPalette() {
+  const colorSize = 20; // in pixels
+  const width = 4 * colorSize; // 4 columns
+  const height = 16 * colorSize; // 16 rows
+
+  paletteCanvas.width = width;
+  paletteCanvas.height = height;
+
+  paletteContext.clearRect(0, 0, width, height);
+
+  for (let y = 0; y < 16; y++) {
+    for (let x = 0; x < 4; x++) {
+      const index = currentPalettePage * 64 + (y * 4 + x);
+
+      const color = `rgb(${image.palette[index][0]}, ${image.palette[index][1]}, ${image.palette[index][2]})`;
+      paletteContext.fillStyle = color;
+
+      paletteContext.fillRect(x * colorSize, y * colorSize, width, height);
+    }
+  }
+}
+
+function drawImage(image, ctx) {
+  ctx.clearRect(0, 0, image.width, image.height);
+  let pixels = ctx.createImageData(image.width, image.height);
 
   for (let x = 0; x < image.width; x++) {
     for (let y = 0; y < image.height; y++) {
@@ -87,5 +164,34 @@ function drawImage(image, context) {
     }
   }
 
-  context.putImageData(pixels, 0, 0);
+  ctx.putImageData(pixels, 0, 0);
+}
+
+function cycleColors(now) {
+  image.cyclingRanges.forEach((range) => {
+    if (range.active) {
+      if (!range.lastTime) range.lastTime = now;
+
+      if (now - range.lastTime > range.rate / cycleSpeed) {
+        if (range.direction === "forward") {
+          // Move last color to first position
+          const lastColor = image.palette.splice(range.high, 1)[0];
+          image.palette.splice(range.low, 0, lastColor);
+        } else if (range.direction === "reverse") {
+          // Move first color to last position
+          const firstColor = image.palette.splice(range.low, 1)[0];
+          image.palette.splice(range.high, 0, firstColor);
+        }
+        range.lastTime = now;
+      }
+    }
+  });
+}
+
+function animate(now) {
+  cycleColors(now);
+  drawPalette();
+  drawImage(image, imageContext);
+
+  if (running) requestAnimationFrame(animate);
 }

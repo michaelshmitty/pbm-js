@@ -1,17 +1,25 @@
-#image-canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 640px;
-    height: 480px;
+.container {
+    display: flex;
+    justify-content: space-evenly;
 }
 
-#thumbnail-canvas {
-    position: absolute;
-    top: 50%;
-    left: 15%;
-    transform: translate(-50%, -50%);
-    width: 80px;
-    height: 60px;
+.sidebar {
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.buttons {
+    display: flex;
+    justify-content: space-around;
+}
+
+#palette-canvas {
+    border: 1px solid black;
+}
+
+#cyclingSpeedSlider {
+    width: 70%;
 }
