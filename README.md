@@ -8,6 +8,7 @@ This is the format used by the PC version of Deluxe Paint II and is different fr
 
 - Written using ES6 modules, runs out of the box in modern browsers.
 - 100% plain JavaScript. No dependencies.
+- Compatible with all [Mark J. Ferrari](https://www.markferrari.com/about/)'s artwork I could find.
 
 ## Usage
 
@@ -49,10 +50,6 @@ npm install
 npm run test
 ```
 
-## Known issues
-
-- Not yet compatible with all PBM files I have lying around
-
 ## Missing features
 
 - Color Cycling
@@ -64,4 +61,4 @@ npm run test
 
 ## Contributing
 
-This software is currently in alpha version. Bug reports and pull requests welcome.
+This software is currently in alpha version. Bug reports and pull requests welcome. If you find an IFF PBM file that cannot be parsed by this library, please send it to me if licensing / copyright permits you to share it.
