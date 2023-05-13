@@ -57,4 +57,6 @@ npm run test
 
 ## Contributing
 
-This software is currently in alpha version. Bug reports and pull requests welcome. If you find an IFF PBM file that cannot be parsed by this library, please send it to me if licensing / copyright permits you to share it.
+If you find an IFF PBM file that cannot be parsed by this library, please open an issue or send it to me if licensing / copyright permits you to share it.
+
+Suggestions, bug reports and pull requests welcome.
