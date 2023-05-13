@@ -50,10 +50,6 @@ npm install
 npm run test
 ```
 
-## Missing features
-
-- Color Cycling
-
 ## References
 
 - [libiff](https://github.com/svanderburg/libiff): Portable, extensible parser for the Interchange File Format (IFF). Well documented and very detailed C implementation of the IFF file format by [Sander van der Burg](http://sandervanderburg.nl/index.php).
