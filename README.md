@@ -1,6 +1,6 @@
 # pbm-js
 
-JavaScript library for IFF PBM files.
+JavaScript library for parsing IFF PBM files.
 
 This is the format used by the PC version of Deluxe Paint II and is different from the Amiga version.
 
