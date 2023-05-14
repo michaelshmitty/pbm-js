@@ -170,14 +170,31 @@ class PBM {
   // Parse Color range chunk
   parseCRNG() {
     this.binaryStream.jump(2); // 2 bytes padding according to https://en.wikipedia.org/wiki/ILBM#CRNG:_Colour_range
-    const cyclingRange = {
-      rate: this.binaryStream.readInt16BE(),
-      flags: this.binaryStream.readInt16BE(),
-      low: this.binaryStream.readUint8(),
-      hight: this.binaryStream.readUint8(),
-    };
 
-    this.cyclingRanges.push(cyclingRange);
+    const rate = this.binaryStream.readInt16BE();
+    const flags = this.binaryStream.readInt16BE();
+    const low = this.binaryStream.readUint8();
+    const high = this.binaryStream.readUint8();
+
+    // Parse flags according to https://en.wikipedia.org/wiki/ILBM#CRNG:_Colour_range
+    // If bit 0 is 1, the color should cycle, otherwise this color register range is inactive
+    // and should have no effect.
+    //
+    // If bit 1 is 0, the colors cycle upwards (forward), i.e. each color moves into the next
+    // index position in the palette and the uppermost color in the range moves down to the
+    // lowest position.
+    // If bit 1 is 1, the colors cycle in the opposite direction (reverse).
+    // Only those colors between the low and high entries in the palette should cycle.
+    const activeBitMask = 1 << 0;
+    const directionBitMask = 1 << 1;
+
+    this.cyclingRanges.push({
+      rate: rate,
+      active: (flags & activeBitMask) !== 0,
+      direction: (flags & directionBitMask) !== 0 ? "reverse" : "forward",
+      low: low,
+      high: high,
+    });
   }
 
   // Parse Thumbnail chunk
