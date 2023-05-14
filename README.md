@@ -10,6 +10,8 @@ This is the format used by the PC version of Deluxe Paint II and is different fr
 - 100% plain JavaScript. No dependencies.
 - Compatible with all [Mark J. Ferrari](https://www.markferrari.com/about/)'s artwork I could find.
 
+Try it out at [https://michaelshmitty.github.io/pbm-js/](https://michaelshmitty.github.io/pbm-js/). You will need to supply your own IFF PBM files. All processing is done in your browser, no data is sent to any server.
+
 ## Usage
 
 ### In the browser
