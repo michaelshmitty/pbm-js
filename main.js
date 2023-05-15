@@ -74,7 +74,6 @@ fetch("/assets/TEST.LBM")
     drawPalette(image.palette, currentPalettePage, paletteContext);
     drawImage(image.thumbnail, thumbnailContext);
     drawImage(image, imageContext);
-    console.log(image.cyclingRanges);
   });
 
 function handleFile() {
