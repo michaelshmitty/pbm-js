@@ -13,6 +13,10 @@
   "license": "MIT",
   "devDependencies": {
     "@vitest/coverage-c8": "^0.31.0",
+    "eslint": "^8.41.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.27.5",
     "vitest": "^0.31.0"
   }
 }
