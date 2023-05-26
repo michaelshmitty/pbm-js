@@ -24,71 +24,20 @@
 
  */
 
-import PBM from "./src/pbm.js";
+import PBM from './src/pbm.js';
 
-const thumbnailCanvas = document.getElementById("thumbnail-canvas");
-const thumbnailContext = thumbnailCanvas.getContext("2d");
-const imageCanvas = document.getElementById("image-canvas");
-const imageContext = imageCanvas.getContext("2d");
-const paletteCanvas = document.getElementById("palette-canvas");
-const paletteContext = paletteCanvas.getContext("2d");
-
-const inputElement = document.getElementById("imagefile");
-inputElement.addEventListener("change", handleFile, false);
-
-document.getElementById("paletteLeft").addEventListener("click", paletteLeft);
-document.getElementById("paletteRight").addEventListener("click", paletteRight);
-
-document.getElementById("cycleColors").addEventListener("click", () => {
-  if (running) {
-    running = false;
-  } else {
-    running = true;
-    animate();
-  }
-});
-
-const palettePageLabelEl = document.getElementById("palettePageLabel");
-const cyclingSpeedLabel = document.getElementById("cyclingSpeedLabel");
-cyclingSpeedLabel.innerText = cyclingSpeedSlider.value;
+const thumbnailCanvas = document.getElementById('thumbnail-canvas');
+const thumbnailContext = thumbnailCanvas.getContext('2d');
+const imageCanvas = document.getElementById('image-canvas');
+const imageContext = imageCanvas.getContext('2d');
+const paletteCanvas = document.getElementById('palette-canvas');
+const paletteContext = paletteCanvas.getContext('2d');
 
 let currentPalettePage = 0;
 let image = null;
 let running = false;
 
 let cycleSpeed = 15.0;
-
-document
-  .getElementById("cyclingSpeedSlider")
-  .addEventListener("input", (evt) => {
-    cycleSpeed = evt.target.value;
-    cyclingSpeedLabel.innerText = cycleSpeed;
-  });
-
-fetch("/assets/TEST.LBM")
-  .then((response) => {
-    return response.arrayBuffer();
-  })
-  .then((buffer) => {
-    image = loadImage(buffer);
-    drawPalette(image.palette, currentPalettePage, paletteContext);
-    drawImage(image.thumbnail, thumbnailContext);
-    drawImage(image, imageContext);
-  });
-
-function handleFile() {
-  const imageFile = this.files[0];
-  const reader = new FileReader();
-
-  reader.onload = (evt) => {
-    image = loadImage(evt.target.result);
-    drawPalette(image.palette, currentPalettePage, paletteContext);
-    drawImage(image.thumbnail, thumbnailContext);
-    drawImage(image, imageContext);
-  };
-
-  reader.readAsArrayBuffer(imageFile);
-}
 
 function loadImage(buffer) {
   image = new PBM(buffer);
@@ -98,26 +47,6 @@ function loadImage(buffer) {
   imageCanvas.height = image.height;
 
   return image;
-}
-
-function paletteLeft(evt) {
-  if (currentPalettePage === 0) {
-    currentPalettePage = 3;
-  } else {
-    currentPalettePage--;
-  }
-  palettePageLabelEl.innerText = currentPalettePage + 1;
-  drawPalette();
-}
-
-function paletteRight(evt) {
-  if (currentPalettePage === 3) {
-    currentPalettePage = 0;
-  } else {
-    currentPalettePage++;
-  }
-  palettePageLabelEl.innerText = currentPalettePage + 1;
-  drawPalette();
 }
 
 function drawPalette() {
@@ -142,19 +71,19 @@ function drawPalette() {
   }
 }
 
-function drawImage(image, ctx) {
-  ctx.clearRect(0, 0, image.width, image.height);
-  let pixels = ctx.createImageData(image.width, image.height);
+function drawImage(anImage, ctx) {
+  ctx.clearRect(0, 0, anImage.width, anImage.height);
+  const pixels = ctx.createImageData(anImage.width, anImage.height);
 
-  for (let x = 0; x < image.width; x++) {
-    for (let y = 0; y < image.height; y++) {
-      const index = y * image.width + x;
-      const paletteIndex = image.pixelData[index];
+  for (let x = 0; x < anImage.width; x++) {
+    for (let y = 0; y < anImage.height; y++) {
+      const index = y * anImage.width + x;
+      const paletteIndex = anImage.pixelData[index];
       const pixelIndex = index * 4;
 
-      const r = image.palette[paletteIndex][0];
-      const g = image.palette[paletteIndex][1];
-      const b = image.palette[paletteIndex][2];
+      const r = anImage.palette[paletteIndex][0];
+      const g = anImage.palette[paletteIndex][1];
+      const b = anImage.palette[paletteIndex][2];
 
       pixels.data[pixelIndex] = r;
       pixels.data[pixelIndex + 1] = g;
@@ -166,17 +95,53 @@ function drawImage(image, ctx) {
   ctx.putImageData(pixels, 0, 0);
 }
 
+function handleFile() {
+  const imageFile = this.files[0];
+  const reader = new FileReader();
+
+  reader.onload = (evt) => {
+    image = loadImage(evt.target.result);
+    drawPalette(image.palette, currentPalettePage, paletteContext);
+    drawImage(image.thumbnail, thumbnailContext);
+    drawImage(image, imageContext);
+  };
+
+  reader.readAsArrayBuffer(imageFile);
+}
+
+function paletteLeft() {
+  if (currentPalettePage === 0) {
+    currentPalettePage = 3;
+  } else {
+    currentPalettePage -= 1;
+  }
+  document.getElementById('palettePageLabel').innerText =
+    currentPalettePage + 1;
+  drawPalette();
+}
+
+function paletteRight() {
+  if (currentPalettePage === 3) {
+    currentPalettePage = 0;
+  } else {
+    currentPalettePage += 1;
+  }
+  document.getElementById('palettePageLabel').innerText =
+    currentPalettePage + 1;
+  drawPalette();
+}
+
 function cycleColors(now) {
   image.cyclingRanges.forEach((range) => {
     if (range.active) {
       if (!range.lastTime) range.lastTime = now;
 
       if (now - range.lastTime > range.rate / cycleSpeed) {
-        if (range.direction === "forward") {
+        if (range.direction === 'forward') {
           // Move last color to first position
           const lastColor = image.palette.splice(range.high, 1)[0];
           image.palette.splice(range.low, 0, lastColor);
-        } else if (range.direction === "reverse") {
+        } else if (range.direction === 'reverse') {
           // Move first color to last position
           const firstColor = image.palette.splice(range.low, 1)[0];
           image.palette.splice(range.high, 0, firstColor);
@@ -194,3 +159,33 @@ function animate(now) {
 
   if (running) requestAnimationFrame(animate);
 }
+
+const inputElement = document.getElementById('imagefile');
+inputElement.addEventListener('change', handleFile, false);
+
+document.getElementById('paletteLeft').addEventListener('click', paletteLeft);
+document.getElementById('paletteRight').addEventListener('click', paletteRight);
+document.getElementById('cycleColors').addEventListener('click', () => {
+  if (running) {
+    running = false;
+  } else {
+    running = true;
+    animate();
+  }
+});
+
+document
+  .getElementById('cyclingSpeedSlider')
+  .addEventListener('input', (evt) => {
+    cycleSpeed = evt.target.value;
+    document.getElementById('cyclingSpeedLabel').innerText = cycleSpeed;
+  });
+
+fetch('/assets/TEST.LBM')
+  .then((response) => response.arrayBuffer())
+  .then((buffer) => {
+    image = loadImage(buffer);
+    drawPalette(image.palette, currentPalettePage, paletteContext);
+    drawImage(image.thumbnail, thumbnailContext);
+    drawImage(image, imageContext);
+  });

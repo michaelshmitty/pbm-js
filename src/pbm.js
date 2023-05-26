@@ -24,7 +24,7 @@
 
  */
 
-import BinaryStream from "./binarystream.js";
+import BinaryStream from './binarystream.js';
 
 class PBM {
   constructor(arrayBuffer) {
@@ -81,7 +81,7 @@ class PBM {
     const formatId = this.binaryStream.readString(4);
 
     // Validate chunk according to notes on https://en.wikipedia.org/wiki/ILBM
-    if (chunkId !== "FORM") {
+    if (chunkId !== 'FORM') {
       throw new Error(
         `Invalid chunkId: "${chunkId}" at byte ${this.binaryStream.index}. Expected "FORM".`
       );
@@ -95,7 +95,7 @@ class PBM {
       );
     }
 
-    if (formatId !== "PBM ") {
+    if (formatId !== 'PBM ') {
       throw new Error(`Invalid formatId: "${formatId}". Expected "PBM ".`);
     }
 
@@ -105,23 +105,23 @@ class PBM {
       chunkLength = this.binaryStream.readUint32BE();
 
       switch (chunkId) {
-        case "BMHD":
+        case 'BMHD':
           this.parseBMHD();
           break;
-        case "CMAP":
+        case 'CMAP':
           this.parseCMAP();
           break;
-        case "DPPS":
+        case 'DPPS':
           // NOTE(m): Ignore unknown DPPS chunk of size 110 bytes
           this.binaryStream.jump(110);
           break;
-        case "CRNG":
+        case 'CRNG':
           this.parseCRNG();
           break;
-        case "TINY":
+        case 'TINY':
           this.parseTINY(chunkLength);
           break;
-        case "BODY":
+        case 'BODY':
           this.parseBODY(chunkLength);
           break;
         default:
@@ -159,7 +159,7 @@ class PBM {
 
     // TODO(m): Read 3 bytes at a time?
     for (let i = 0; i < numColors; i++) {
-      let rgb = [];
+      const rgb = [];
       for (let j = 0; j < 3; j++) {
         rgb.push(this.binaryStream.readByte());
       }
@@ -189,11 +189,11 @@ class PBM {
     const directionBitMask = 1 << 1;
 
     this.cyclingRanges.push({
-      rate: rate,
+      rate,
       active: (flags & activeBitMask) !== 0,
-      direction: (flags & directionBitMask) !== 0 ? "reverse" : "forward",
-      low: low,
-      high: high,
+      direction: (flags & directionBitMask) !== 0 ? 'reverse' : 'forward',
+      low,
+      high,
     });
   }
 
@@ -226,7 +226,7 @@ class PBM {
   }
 
   decompress(endOfChunkIndex) {
-    let result = [];
+    const result = [];
 
     while (this.binaryStream.index < endOfChunkIndex) {
       const byte = this.binaryStream.readByte();
@@ -251,7 +251,7 @@ class PBM {
   // TODO(m): Read a range of bytes straight into an array?
   // Use arrayBuffers throughout instead?
   readUncompressed(endOfChunkIndex) {
-    let result = [];
+    const result = [];
 
     while (this.binaryStream.index < endOfChunkIndex) {
       const byte = this.binaryStream.readByte();

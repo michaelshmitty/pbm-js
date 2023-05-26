@@ -46,7 +46,7 @@ class BinaryStream {
   readByte() {
     const byte = this.dataView.getUint8(this.index);
 
-    this.index++;
+    this.index += 1;
     return byte;
   }
 
@@ -58,7 +58,7 @@ class BinaryStream {
   }
 
   readString(length) {
-    let string = "";
+    let string = '';
 
     for (let i = 0; i < length; i++) {
       const byte = this.dataView.getUint8(this.index + i);
