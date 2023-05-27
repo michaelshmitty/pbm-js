@@ -39,16 +39,7 @@ let running = false;
 
 let cycleSpeed = 15.0;
 
-function loadImage(buffer) {
-  image = new PBM(buffer);
-  thumbnailCanvas.width = image.thumbnail.width;
-  thumbnailCanvas.height = image.thumbnail.height;
-  imageCanvas.width = image.width;
-  imageCanvas.height = image.height;
-
-  return image;
-}
-
+// Drawing
 function drawPalette() {
   const colorSize = 20; // in pixels
   const width = 4 * colorSize; // 4 columns
@@ -95,21 +86,37 @@ function drawImage(anImage, ctx) {
   ctx.putImageData(pixels, 0, 0);
 }
 
-function handleFile() {
-  const imageFile = this.files[0];
-  const reader = new FileReader();
+// Image loading
+function loadImage(buffer) {
+  image = new PBM(buffer);
+  thumbnailCanvas.width = image.thumbnail.width;
+  thumbnailCanvas.height = image.thumbnail.height;
+  imageCanvas.width = image.width;
+  imageCanvas.height = image.height;
 
-  reader.onload = (evt) => {
-    image = loadImage(evt.target.result);
-    drawPalette(image.palette, currentPalettePage, paletteContext);
-    drawImage(image.thumbnail, thumbnailContext);
-    drawImage(image, imageContext);
-  };
-
-  reader.readAsArrayBuffer(imageFile);
+  return image;
 }
 
-function paletteLeft() {
+document.getElementById('imagefile').addEventListener(
+  'change',
+  (e) => {
+    const imageFile = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (evt) => {
+      image = loadImage(evt.target.result);
+      drawPalette(image.palette, currentPalettePage, paletteContext);
+      drawImage(image.thumbnail, thumbnailContext);
+      drawImage(image, imageContext);
+    };
+
+    reader.readAsArrayBuffer(imageFile);
+  },
+  false
+);
+
+// Palette navigation
+document.getElementById('paletteLeft').addEventListener('click', () => {
   if (currentPalettePage === 0) {
     currentPalettePage = 3;
   } else {
@@ -118,9 +125,9 @@ function paletteLeft() {
   document.getElementById('palettePageLabel').innerText =
     currentPalettePage + 1;
   drawPalette();
-}
+});
 
-function paletteRight() {
+document.getElementById('paletteRight').addEventListener('click', () => {
   if (currentPalettePage === 3) {
     currentPalettePage = 0;
   } else {
@@ -129,8 +136,9 @@ function paletteRight() {
   document.getElementById('palettePageLabel').innerText =
     currentPalettePage + 1;
   drawPalette();
-}
+});
 
+// Color cycling
 function cycleColors(now) {
   image.cyclingRanges.forEach((range) => {
     if (range.active) {
@@ -160,11 +168,13 @@ function animate(now) {
   if (running) requestAnimationFrame(animate);
 }
 
-const inputElement = document.getElementById('imagefile');
-inputElement.addEventListener('change', handleFile, false);
+document
+  .getElementById('cyclingSpeedSlider')
+  .addEventListener('input', (evt) => {
+    cycleSpeed = evt.target.value;
+    document.getElementById('cyclingSpeedLabel').innerText = cycleSpeed;
+  });
 
-document.getElementById('paletteLeft').addEventListener('click', paletteLeft);
-document.getElementById('paletteRight').addEventListener('click', paletteRight);
 document.getElementById('cycleColors').addEventListener('click', () => {
   if (running) {
     running = false;
@@ -173,19 +183,3 @@ document.getElementById('cycleColors').addEventListener('click', () => {
     animate();
   }
 });
-
-document
-  .getElementById('cyclingSpeedSlider')
-  .addEventListener('input', (evt) => {
-    cycleSpeed = evt.target.value;
-    document.getElementById('cyclingSpeedLabel').innerText = cycleSpeed;
-  });
-
-fetch('/assets/TEST.LBM')
-  .then((response) => response.arrayBuffer())
-  .then((buffer) => {
-    image = loadImage(buffer);
-    drawPalette(image.palette, currentPalettePage, paletteContext);
-    drawImage(image.thumbnail, thumbnailContext);
-    drawImage(image, imageContext);
-  });
