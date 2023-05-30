@@ -24,7 +24,7 @@
 
  */
 
-import BinaryStream from './binarystream.js';
+import BinaryStream from "./binarystream.js";
 
 class PBM {
   constructor(arrayBuffer) {
@@ -81,7 +81,7 @@ class PBM {
     const formatId = this.binaryStream.readString(4);
 
     // Validate chunk according to notes on https://en.wikipedia.org/wiki/ILBM
-    if (chunkId !== 'FORM') {
+    if (chunkId !== "FORM") {
       throw new Error(
         `Invalid chunkId: "${chunkId}" at byte ${this.binaryStream.index}. Expected "FORM".`
       );
@@ -95,7 +95,7 @@ class PBM {
       );
     }
 
-    if (formatId !== 'PBM ') {
+    if (formatId !== "PBM ") {
       throw new Error(`Invalid formatId: "${formatId}". Expected "PBM ".`);
     }
 
@@ -105,23 +105,23 @@ class PBM {
       chunkLength = this.binaryStream.readUint32BE();
 
       switch (chunkId) {
-        case 'BMHD':
+        case "BMHD":
           this.parseBMHD();
           break;
-        case 'CMAP':
+        case "CMAP":
           this.parseCMAP();
           break;
-        case 'DPPS':
+        case "DPPS":
           // NOTE(m): Ignore unknown DPPS chunk of size 110 bytes
           this.binaryStream.jump(110);
           break;
-        case 'CRNG':
+        case "CRNG":
           this.parseCRNG();
           break;
-        case 'TINY':
+        case "TINY":
           this.parseTINY(chunkLength);
           break;
-        case 'BODY':
+        case "BODY":
           this.parseBODY(chunkLength);
           break;
         default:
@@ -191,7 +191,7 @@ class PBM {
     this.cyclingRanges.push({
       rate,
       active: (flags & activeBitMask) !== 0,
-      direction: (flags & directionBitMask) !== 0 ? 'reverse' : 'forward',
+      direction: (flags & directionBitMask) !== 0 ? "reverse" : "forward",
       low,
       high,
     });

@@ -24,14 +24,14 @@
 
  */
 
-import PBM from './src/pbm.js';
+import PBM from "./src/pbm.js";
 
-const thumbnailCanvas = document.getElementById('thumbnail-canvas');
-const thumbnailContext = thumbnailCanvas.getContext('2d');
-const imageCanvas = document.getElementById('image-canvas');
-const imageContext = imageCanvas.getContext('2d');
-const paletteCanvas = document.getElementById('palette-canvas');
-const paletteContext = paletteCanvas.getContext('2d');
+const thumbnailCanvas = document.getElementById("thumbnail-canvas");
+const thumbnailContext = thumbnailCanvas.getContext("2d");
+const imageCanvas = document.getElementById("image-canvas");
+const imageContext = imageCanvas.getContext("2d");
+const paletteCanvas = document.getElementById("palette-canvas");
+const paletteContext = paletteCanvas.getContext("2d");
 
 let currentPalettePage = 0;
 let image = null;
@@ -97,8 +97,8 @@ function loadImage(buffer) {
   return image;
 }
 
-document.getElementById('imagefile').addEventListener(
-  'change',
+document.getElementById("imagefile").addEventListener(
+  "change",
   (e) => {
     const imageFile = e.target.files[0];
     const reader = new FileReader();
@@ -116,24 +116,24 @@ document.getElementById('imagefile').addEventListener(
 );
 
 // Palette navigation
-document.getElementById('paletteLeft').addEventListener('click', () => {
+document.getElementById("paletteLeft").addEventListener("click", () => {
   if (currentPalettePage === 0) {
     currentPalettePage = 3;
   } else {
     currentPalettePage -= 1;
   }
-  document.getElementById('palettePageLabel').innerText =
+  document.getElementById("palettePageLabel").innerText =
     currentPalettePage + 1;
   drawPalette();
 });
 
-document.getElementById('paletteRight').addEventListener('click', () => {
+document.getElementById("paletteRight").addEventListener("click", () => {
   if (currentPalettePage === 3) {
     currentPalettePage = 0;
   } else {
     currentPalettePage += 1;
   }
-  document.getElementById('palettePageLabel').innerText =
+  document.getElementById("palettePageLabel").innerText =
     currentPalettePage + 1;
   drawPalette();
 });
@@ -145,11 +145,11 @@ function cycleColors(now) {
       if (!range.lastTime) range.lastTime = now;
 
       if (now - range.lastTime > range.rate / cycleSpeed) {
-        if (range.direction === 'forward') {
+        if (range.direction === "forward") {
           // Move last color to first position
           const lastColor = image.palette.splice(range.high, 1)[0];
           image.palette.splice(range.low, 0, lastColor);
-        } else if (range.direction === 'reverse') {
+        } else if (range.direction === "reverse") {
           // Move first color to last position
           const firstColor = image.palette.splice(range.low, 1)[0];
           image.palette.splice(range.high, 0, firstColor);
@@ -169,13 +169,13 @@ function animate(now) {
 }
 
 document
-  .getElementById('cyclingSpeedSlider')
-  .addEventListener('input', (evt) => {
+  .getElementById("cyclingSpeedSlider")
+  .addEventListener("input", (evt) => {
     cycleSpeed = evt.target.value;
-    document.getElementById('cyclingSpeedLabel').innerText = cycleSpeed;
+    document.getElementById("cyclingSpeedLabel").innerText = cycleSpeed;
   });
 
-document.getElementById('cycleColors').addEventListener('click', () => {
+document.getElementById("cycleColors").addEventListener("click", () => {
   if (running) {
     running = false;
   } else {
