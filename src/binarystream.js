@@ -44,10 +44,17 @@ class BinaryStream {
   }
 
   readByte() {
-    const byte = this.dataView.getUint8(this.index);
+    return this.readUint8();
+  }
 
-    this.index += 1;
-    return byte;
+  readBytes(length) {
+    const bytes = [];
+
+    for (let i = 0; i < length; i++) {
+      bytes.push(this.readUint8());
+    }
+
+    return bytes;
   }
 
   readInt16BE() {

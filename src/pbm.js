@@ -26,6 +26,30 @@
 
 import BinaryStream from "./binarystream.js";
 
+function decompress(binaryStream, length) {
+  const result = [];
+  const endOfChunkIndex = binaryStream.index + length;
+
+  while (binaryStream.index < endOfChunkIndex) {
+    const byte = binaryStream.readByte();
+
+    if (byte > 128) {
+      const nextByte = binaryStream.readByte();
+      for (let i = 0; i < 257 - byte; i++) {
+        result.push(nextByte);
+      }
+    } else if (byte < 128) {
+      for (let i = 0; i < byte + 1; i++) {
+        result.push(binaryStream.readByte());
+      }
+    } else {
+      break;
+    }
+  }
+
+  return result;
+}
+
 // Parse Bitmap Header chunk
 function parseBMHD(binaryStream, image) {
   image.width = binaryStream.readUint16BE();
@@ -45,9 +69,9 @@ function parseBMHD(binaryStream, image) {
 }
 
 // Parse Palette chunk
-function parseCMAP(binaryStream, image) {
-  const numColors = 2 ** image.numPlanes;
-  image.palette = [];
+function parseCMAP(binaryStream, numPlanes) {
+  const palette = [];
+  const numColors = 2 ** numPlanes;
 
   // TODO(m): Read 3 bytes at a time?
   for (let i = 0; i < numColors; i++) {
@@ -55,8 +79,10 @@ function parseCMAP(binaryStream, image) {
     for (let j = 0; j < 3; j++) {
       rgb.push(binaryStream.readByte());
     }
-    image.palette.push(rgb);
+    palette.push(rgb);
   }
+
+  return palette;
 }
 
 // Parse Color range chunk
@@ -89,78 +115,34 @@ function parseCRNG(binaryStream) {
   };
 }
 
-function decompress(binaryStream, endOfChunkIndex) {
-  const result = [];
-
-  while (binaryStream.index < endOfChunkIndex) {
-    const byte = binaryStream.readByte();
-
-    if (byte > 128) {
-      const nextByte = binaryStream.readByte();
-      for (let i = 0; i < 257 - byte; i++) {
-        result.push(nextByte);
-      }
-    } else if (byte < 128) {
-      for (let i = 0; i < byte + 1; i++) {
-        result.push(binaryStream.readByte());
-      }
-    } else {
-      break;
-    }
-  }
-
-  return result;
-}
-
-// TODO(m): Read a range of bytes straight into an array?
-// Use arrayBuffers throughout instead?
-function readUncompressed(binaryStream, endOfChunkIndex) {
-  const result = [];
-
-  while (binaryStream.index < endOfChunkIndex) {
-    const byte = binaryStream.readByte();
-    result.push(byte);
-  }
-
-  return result;
-}
-
 // Parse Thumbnail chunk
-function parseTINY(binaryStream, image, chunkLength) {
-  image.thumbnail = {
-    // FIXME(m): Remove need for reference to image palette in thumbnail data
-    palette: image.palette,
-  };
-  const endOfChunkIndex = binaryStream.index + chunkLength;
+function parseTINY(binaryStream, compression, chunkLength) {
+  const thumbnail = {};
 
-  image.thumbnail.width = binaryStream.readUint16BE();
-  image.thumbnail.height = binaryStream.readUint16BE();
-  image.thumbnail.size = image.thumbnail.width * image.thumbnail.height;
+  thumbnail.width = binaryStream.readUint16BE();
+  thumbnail.height = binaryStream.readUint16BE();
+  thumbnail.size = thumbnail.width * thumbnail.height;
 
-  if (image.compression === 1) {
-    image.thumbnail.pixelData = decompress(binaryStream, endOfChunkIndex);
+  if (compression === 1) {
+    thumbnail.pixelData = decompress(binaryStream, chunkLength - 4);
   } else {
-    image.thumbnail.pixelData = readUncompressed(binaryStream, endOfChunkIndex);
+    thumbnail.pixelData = binaryStream.readBytes(chunkLength);
   }
+
+  return thumbnail;
 }
 
 // Parse Image data chunk
-function parseBODY(binaryStream, image, chunkLength) {
-  const endOfChunkIndex = binaryStream.index + chunkLength;
-
-  if (image.compression === 1) {
-    image.pixelData = decompress(binaryStream, endOfChunkIndex);
-  } else {
-    image.pixelData = readUncompressed(binaryStream, endOfChunkIndex);
+function parseBODY(binaryStream, compression, chunkLength) {
+  if (compression === 1) {
+    return decompress(binaryStream, chunkLength);
   }
+
+  return binaryStream.readBytes(chunkLength);
 }
 
 // Parse FORM chunk
-function parseFORM(binaryStream) {
-  const image = {
-    cyclingRanges: [],
-  };
-
+function parseFORM(binaryStream, image) {
   let chunkId = binaryStream.readString(4);
   let chunkLength = binaryStream.readUint32BE();
   const formatId = binaryStream.readString(4);
@@ -194,7 +176,7 @@ function parseFORM(binaryStream) {
         parseBMHD(binaryStream, image);
         break;
       case "CMAP":
-        parseCMAP(binaryStream, image);
+        image.palette = parseCMAP(binaryStream, image.numPlanes);
         break;
       case "DPPS":
         // NOTE(m): Ignore unknown DPPS chunk of size 110 bytes
@@ -204,10 +186,21 @@ function parseFORM(binaryStream) {
         image.cyclingRanges.push(parseCRNG(binaryStream));
         break;
       case "TINY":
-        parseTINY(binaryStream, image, chunkLength);
+        image.thumbnail = parseTINY(
+          binaryStream,
+          image.compression,
+          chunkLength
+        );
+
+        // FIXME(m): Remove need for reference to image palette in thumbnail data
+        image.thumbnail.palette = image.palette;
         break;
       case "BODY":
-        parseBODY(binaryStream, image, chunkLength);
+        image.pixelData = parseBODY(
+          binaryStream,
+          image.compression,
+          chunkLength
+        );
         break;
       default:
         throw new Error(
@@ -218,15 +211,16 @@ function parseFORM(binaryStream) {
     // Skip chunk padding byte when chunkLength is not a multiple of 2
     if (chunkLength % 2 === 1) binaryStream.jump(1);
   }
-
-  return image;
 }
 
 export default function parsePBM(arrayBuffer) {
   const binaryStream = new BinaryStream(arrayBuffer);
+  const image = {
+    cyclingRanges: [],
+  };
+
   try {
-    const image = parseFORM(binaryStream);
-    return image;
+    parseFORM(binaryStream, image);
   } catch (error) {
     if (error instanceof RangeError) {
       throw new Error(`Failed to parse file.`);
@@ -234,4 +228,6 @@ export default function parsePBM(arrayBuffer) {
       throw error; // re-throw the error unchanged
     }
   }
+
+  return image;
 }
