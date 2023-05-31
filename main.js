@@ -24,7 +24,7 @@
 
  */
 
-import PBM from "./src/pbm.js";
+import parsePBM from "./src/pbm.js";
 
 const thumbnailCanvas = document.getElementById("thumbnail-canvas");
 const thumbnailContext = thumbnailCanvas.getContext("2d");
@@ -88,7 +88,7 @@ function drawImage(anImage, ctx) {
 
 // Image loading
 function loadImage(buffer) {
-  image = new PBM(buffer);
+  image = parsePBM(buffer);
   thumbnailCanvas.width = image.thumbnail.width;
   thumbnailCanvas.height = image.thumbnail.height;
   imageCanvas.width = image.width;

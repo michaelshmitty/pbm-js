@@ -27,7 +27,7 @@
 
 import { expect, test } from "vitest";
 
-import PBM from "../src/pbm.js";
+import parsePBM from "../src/pbm.js";
 
 const fs = require("fs");
 
@@ -35,7 +35,7 @@ test("Successfully parse a PBM file", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
 
   expect(() => {
-    new PBM(data.buffer);
+    parsePBM(data.buffer);
   }).not.toThrowError();
 });
 
@@ -43,7 +43,7 @@ test("Fail to parse a PBM file with an invalid chunk id", () => {
   const data = fs.readFileSync("./tests/fixtures/INVALID_CHUNK_ID.LBM");
 
   expect(() => {
-    new PBM(data.buffer);
+    parsePBM(data.buffer);
   }).toThrowError(/^Invalid chunkId: "FARM" at byte 12. Expected "FORM".$/);
 });
 
@@ -51,7 +51,7 @@ test("Fail to parse a PBM file with an invalid chunk length", () => {
   const data = fs.readFileSync("./tests/fixtures/INVALID_CHUNK_LENGTH.LBM");
 
   expect(() => {
-    new PBM(data.buffer);
+    parsePBM(data.buffer);
   }).toThrowError(/^Invalid chunk length: 7070 bytes. Expected 7012 bytes.$/);
 });
 
@@ -59,13 +59,13 @@ test("Fail to parse an IFF file that is not a PBM file", () => {
   const data = fs.readFileSync("./tests/fixtures/SEASCAPE.LBM");
 
   expect(() => {
-    new PBM(data.buffer);
+    parsePBM(data.buffer);
   }).toThrowError(/^Invalid formatId: "ILBM". Expected "PBM ".$/);
 });
 
 test("Parse a PBM bitmap header", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-  const image = new PBM(data.buffer);
+  const image = parsePBM(data.buffer);
 
   expect(image.width).toStrictEqual(640);
   expect(image.height).toStrictEqual(480);
@@ -84,7 +84,7 @@ test("Parse a PBM bitmap header", () => {
 
 test("Parse PBM palette information", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-  const image = new PBM(data.buffer);
+  const image = parsePBM(data.buffer);
 
   expect(image.palette.length).toStrictEqual(256);
   expect(image.palette[10]).toStrictEqual([87, 255, 87]);
@@ -92,14 +92,14 @@ test("Parse PBM palette information", () => {
 
 test("Parse PBM color cycling information", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-  const image = new PBM(data.buffer);
+  const image = parsePBM(data.buffer);
 
   expect(image.cyclingRanges.length).toStrictEqual(16);
 });
 
 test("Parse PBM thumbnail", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-  const image = new PBM(data.buffer);
+  const image = parsePBM(data.buffer);
 
   expect(image.thumbnail.width).toStrictEqual(80);
   expect(image.thumbnail.height).toStrictEqual(60);
@@ -108,7 +108,7 @@ test("Parse PBM thumbnail", () => {
 
 test("Decode PBM thumbnail pixel data", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-  const image = new PBM(data.buffer);
+  const image = parsePBM(data.buffer);
 
   expect(image.thumbnail.pixelData.length).toStrictEqual(4800);
   // FIXME(m): Verify these values are correct in the test image thumbnail:
@@ -118,7 +118,7 @@ test("Decode PBM thumbnail pixel data", () => {
 
 test("Decode PBM image pixel data", () => {
   const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-  const image = new PBM(data.buffer);
+  const image = parsePBM(data.buffer);
 
   expect(image.pixelData.length).toStrictEqual(307_200);
   // FIXME(m): Verify these values are correct in the test image:

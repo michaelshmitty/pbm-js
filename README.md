@@ -19,14 +19,14 @@ Try it out at [https://michaelshmitty.github.io/pbm-js/](https://michaelshmitty.
 _Also see `index.html` and `main.js` for a more elaborate example that renders the image and palette data to an html5 canvas and supports color cycling._
 
 ```javascript
-import PBM from "./src/pbm.js";
+import parsePBM from "./src/pbm.js";
 
 fetch("/assets/TEST.LBM")
   .then((response) => {
     return response.arrayBuffer();
   })
   .then((buffer) => {
-    const image = new PBM(buffer);
+    const image = parsePBM(buffer);
     console.log(image);
   });
 ```
@@ -36,10 +36,10 @@ fetch("/assets/TEST.LBM")
 ```javascript
 import * as fs from "fs";
 
-import PBM from "./src/pbm.js";
+import parsePBM from "./src/pbm.js";
 
 const data = fs.readFileSync("./tests/fixtures/VALID.LBM");
-const image = new PBM(data.buffer);
+const image = parsePBM(data.buffer);
 console.log(image);
 ```
 
