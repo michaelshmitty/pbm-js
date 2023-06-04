@@ -63,6 +63,8 @@ function drawPalette() {
 }
 
 function drawImage(anImage, ctx) {
+  if (!anImage) return;
+
   ctx.clearRect(0, 0, anImage.width, anImage.height);
   const pixels = ctx.createImageData(anImage.width, anImage.height);
 
@@ -89,8 +91,8 @@ function drawImage(anImage, ctx) {
 // Image loading
 function loadImage(buffer) {
   image = parsePBM(buffer);
-  thumbnailCanvas.width = image.thumbnail.width;
-  thumbnailCanvas.height = image.thumbnail.height;
+  thumbnailCanvas.width = image.thumbnail?.width || 80;
+  thumbnailCanvas.height = image.thumbnail?.height || 60;
   imageCanvas.width = image.width;
   imageCanvas.height = image.height;
 
